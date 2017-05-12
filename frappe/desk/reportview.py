@@ -272,3 +272,11 @@ def build_match_conditions(doctype, as_condition=True):
 		return match_conditions.replace("%", "%%")
 	else:
 		return match_conditions
+
+@frappe.whitelist()
+def add_comment(dt, dn, comments=None):	
+	"""comment in grid list view """
+	
+	comm_doc = frappe.get_doc(dt,dn)
+	comm_doc.add_comment("Comment", text = comments)
+	return True

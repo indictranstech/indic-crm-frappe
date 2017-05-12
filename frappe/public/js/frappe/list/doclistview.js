@@ -82,7 +82,7 @@ frappe.views.DocListView = frappe.ui.Listing.extend({
 	init: function(opts) {
 		$.extend(this, opts);
 
-		if(!in_list(frappe.boot.user.all_read, this.doctype)) {
+		if(!in_list(frappe.boot.user.all_read, this.doctype)) {	
 			frappe.show_not_permitted(frappe.get_route_str());
 			return;
 		};
@@ -149,6 +149,7 @@ frappe.views.DocListView = frappe.ui.Listing.extend({
 
 		this.init_like();
 		this.init_select_all();
+		this.init_comment();
 	},
 
 	init_listview: function() {
@@ -823,6 +824,7 @@ frappe.views.DocListView = frappe.ui.Listing.extend({
 		var me = this;
 		return $.map(this.$page.find('.list-delete:checked'), function(e) {
 			if(me.current_view==='List'){
+				console.log("KKKKKKK",$(e).parents(".list-row:first").data('data').name)
 				return $(e).parents(".list-row:first").data('data');
 			}
 			else{
@@ -871,5 +873,47 @@ frappe.views.DocListView = frappe.ui.Listing.extend({
 			page: me.page,
 			doclistview: me
 		})
+	},
+
+
+	init_comment:function() {
+		
+		var me = this;
+		this.$page.on("click", ".octicon-comment-discussion", function(event) {
+			var name = $(this).parents().siblings(".list-row-left").find("span .list-id").attr('data-name').trim();
+			var dialog = new frappe.ui.Dialog({
+				title: __("Comments"),
+				fields: [
+					{"fieldtype": "Text", "fieldname": "comment_box"},
+					
+					{"fieldtype": "Button", "label": __("Comment"), "fieldname": "comment"},
+				]
+			});
+			dialog.show();
+		
+			dialog.fields_dict.comment.$input.click(function(){
+				args = dialog.get_values();			
+				if(args.comment_box){
+					frappe.call({
+						method: "frappe.desk.reportview.add_comment",
+						args: {	
+							"dn":name,
+							"dt":me.doctype,
+							"comments": args.comment_box
+						},
+						
+						callback: function(r) {
+							if (r.message){
+								me.refresh(r.message)
+								dialog.hide();
+							}
+						}
+					});
+				}
+				else{
+					dialog.hide();	
+				}
+			});
+		})	
 	}
 });
